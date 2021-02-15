@@ -44,8 +44,9 @@ exports.roboTempo = async function (req, res) {
   //  console.log(format(new Date(), "dd/MM/yyyy HH:mm"));
    const data = format(new Date(), "dd/MM/yyyy");
    const hora = format(new Date(), "HH:mm");
-   const query = `create (l:Cidade {local: $local})-[:Previsao]->
-   
+   const query = `
+   match (l:Cidade {local: $local})
+   merge (l)-[:Previsao]->
    (t:Tempo 
     { 
       temperatura: $temperatura,
@@ -54,8 +55,9 @@ exports.roboTempo = async function (req, res) {
        infoAtual: $infoAtual,
        infoTemp: $infoTemp,
        maxTemp: $maxTemp,
-       minTemp: $minTemp }
-    ) return l, t`;
+       minTemp: $minTemp 
+      }) 
+    return l, t`;
    const params = {
      temperatura: resultado.temperatura,
      data: data,
@@ -72,8 +74,13 @@ exports.roboTempo = async function (req, res) {
 };
 
 exports.getTempo = async function (req, res){
-  const query = `MATCH (t:Tempo) RETURN t`;
-  const resultado = await db.execute({ cypher: query, params: null });
-  console.log(resultado[0].t);
-  res.json(resultado)
+  try {
+    const query = `MATCH (t:Tempo) RETURN t`;
+    const resultado = await db.execute({ cypher: query, params: null });
+    console.log(resultado[0].t);
+    res.json(resultado);
+  } catch (error) {
+    console.log(error);
+    res.json(error)
+  }
 }
