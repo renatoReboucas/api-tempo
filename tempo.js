@@ -5,7 +5,7 @@ const { format, compareAsc }  = require("date-fns")
 
 exports.roboTempo = async function (req, res) {
    const browser = await puppeteer.launch({
-     headless: false,
+     headless: true,
      ignoreHTTPSErrors: true,
    });
    const page = await browser.newPage();
@@ -17,7 +17,8 @@ exports.roboTempo = async function (req, res) {
    const resultado = await page.evaluate(() => {
      let temperatura = document.querySelector("#wob_tm").outerText + "°C";
      const data = document.querySelector("#wob_dts").outerText;
-     const local = document.querySelector("#wob_loc").outerText.split(',')[1].split('-')[0].trim();
+    //  const local = document.querySelector("#wob_loc").outerText.split(',')[1].split('-')[0].trim();
+     const local = document.querySelector("#wob_loc").outerText.split('-')[0].trim()
      const infoAtual = document.querySelector("#wob_dc").textContent;
      const infoTemp = document.querySelector(
        "#wob_dp > div.wob_df.wob_ds > div.DxhUm > img",
@@ -41,14 +42,15 @@ exports.roboTempo = async function (req, res) {
      };
    });
   //  console.log(format(new Date(), "dd/MM/yyyy HH:mm"));
-   const data = format(new Date(), "dd/MM/yyyy HH:mm");
+   const data = format(new Date(), "dd/MM/yyyy");
+   const hora = format(new Date(), "HH:mm");
    const query = `create (l:Cidade {local: $local})-[:Previsao]->
    
    (t:Tempo 
     { 
       temperatura: $temperatura,
        data: $data,
-       
+       hora: $hora,
        infoAtual: $infoAtual,
        infoTemp: $infoTemp,
        maxTemp: $maxTemp,
@@ -57,6 +59,7 @@ exports.roboTempo = async function (req, res) {
    const params = {
      temperatura: resultado.temperatura,
      data: data,
+     hora: hora,
      local: resultado.local,
      infoAtual: resultado.infoAtual,
      infoTemp: resultado.infoTemp,
@@ -67,3 +70,7 @@ exports.roboTempo = async function (req, res) {
    await browser.close();
    res.json(resultado);
 };
+
+exports.getTempo = async function (req, res){
+  
+}
