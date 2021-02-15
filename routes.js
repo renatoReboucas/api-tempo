@@ -6,7 +6,8 @@ const routes = express.Router();
 routes.get("/", (req, res) => {
   return res.send("Bem vindo api tempo!");
 });
- routes.get('/index', tempo.roboTempo)
+ routes.get('/create', tempo.roboTempo)
+ routes.get('/getTempo', tempo.getTempo)
 
 
 module.exports = routes;

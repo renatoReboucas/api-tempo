@@ -72,5 +72,8 @@ exports.roboTempo = async function (req, res) {
 };
 
 exports.getTempo = async function (req, res){
-  
+  const query = `MATCH (t:Tempo) RETURN t`;
+  const resultado = await db.execute({ cypher: query, params: null });
+  console.log(resultado[0].t);
+  res.json(resultado)
 }
