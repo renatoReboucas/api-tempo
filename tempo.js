@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 const QNeo4j = require("@qualitech/qneo4j");
+const neo4j = require('neo4j-driver')
 const db = require('./connect')
 const { format, compareAsc }  = require("date-fns")
 
@@ -45,7 +46,7 @@ exports.roboTempo = async function (req, res) {
    const data = format(new Date(), "dd/MM/yyyy");
    const hora = format(new Date(), "HH:mm");
    const query = `
-   match (l:Cidade {local: $local})
+   merge(l:Cidade {local: $local})
    merge (l)-[:Previsao]->
    (t:Tempo 
     { 
@@ -57,7 +58,17 @@ exports.roboTempo = async function (req, res) {
        maxTemp: $maxTemp,
        minTemp: $minTemp 
       }) 
-    return l, t`;
+    return collect( {cidade: l, tempo:t} )`;
+  // const query = `create (l:Cidade {local: $local})-[:Previsao]->(t:Tempo{ 
+  //     temperatura: $temperatura,
+  //      data: $data,
+  //      hora: $hora,
+  //      infoAtual: $infoAtual,
+  //      infoTemp: $infoTemp,
+  //      maxTemp: $maxTemp,
+  //      minTemp: $minTemp 
+  //     }) 
+  //   return collect( {cidade: l, tempo:t} ) `;
    const params = {
      temperatura: resultado.temperatura,
      data: data,
@@ -68,17 +79,26 @@ exports.roboTempo = async function (req, res) {
      maxTemp: resultado.maxTemp,
      minTemp: resultado.minTemp,
    };
-   await db.execute({ cypher: query, params: params });
+    const resultQuery =  await db.db.execute({ cypher: query, params: params });
+    // console.log(resultQuery);
    await browser.close();
-   res.json(resultado);
+   res.json(resultQuery[0]);
 };
 
 exports.getTempo = async function (req, res){
   try {
-    const query = `MATCH (t:Tempo) RETURN t`;
-    const resultado = await db.execute({ cypher: query, params: null });
-    console.log(resultado[0].t);
-    res.json(resultado);
+    const driver = neo4j.default.driver(
+      db.neo4j_driver.url_bolt,
+      db.neo4j_driver.auth,
+      {disableLosslessIntegers: true}
+      );
+    const session = driver.session();
+    const query = `MATCH(l:Cidade)-[:Previsao]->(t:Tempo) 
+    RETURN collect(distinct {cidade: l, tempo:t} )`;
+    // const resultado = await db.execute({ cypher: query, params: null });
+    const resultado = await session.run(query);
+    console.log(resultado);
+    res.json(resultado.records[0]._fields[0]);
   } catch (error) {
     console.log(error);
     res.json(error)

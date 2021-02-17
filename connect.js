@@ -1,6 +1,7 @@
 const QNeo4j = require("@qualitech/qneo4j");
+const neo4j = require('neo4j-driver')
 
-const db = new QNeo4j({
+exports.db = new QNeo4j({
   url: "bolt://localhost:7687",
   username: "neo4j", // default: 'neo4j'
   password: "mudar123", // default: 'admin'
@@ -20,4 +21,7 @@ const db = new QNeo4j({
   },
 });
 
-module.exports = db
+// module.exports = db
+exports.neo4j_driver = {}
+exports.neo4j_driver.url_bolt = "bolt://localhost:7687";
+exports.neo4j_driver.auth = neo4j.default.auth.basic("neo4j", "mudar123");
